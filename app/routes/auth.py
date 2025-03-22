@@ -1,13 +1,17 @@
 from flask import Blueprint, request, jsonify
-from app.services import login_user, logout_user
+from firebase_admin import auth
 
 bp = Blueprint("auth", __name__)
 
-@bp.route("/google", methods=["POST"])
+@bp.route("/google", methods=["POST", "GET"])
 def google():
-    data = request.json
-    return jsonify(login_user(data))
+    token = request.json.get("token")
+    if not token:
+        return jsonify({"error": "Token is required"}), 400
 
-@bp.route("/whoop", methods=["POST"])
-def whoop():
-    return jsonify(logout_user())
+    try:
+        decoded_token = auth.verify_id_token(token)
+        uid = decoded_token.get("uid")
+        return f'<script>window.location.replace("exp://?uid={uid}")</script>', 200, {'Content-Type': 'text/html'}
+    except Exception as e:
+        return jsonify({"error": "Invalid token", "details": str(e)}), 400

@@ -1,2 +1,6 @@
 .env
 venv/
+.vercel
+*.log
+*.pyc
+__pycache__

@@ -1,13 +1,13 @@
 from flask import Flask
-from .routes import auth, wondering, whoop
+from .routes.auth import bp as authBP
+from .routes.wondering import bp as wonderingBP
+from .routes.whoop import bp as whoopBP
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object("config.Config")
 
-    # Register blueprints
-    app.register_blueprint(auth.bp, url_prefix="/auth")
-    app.register_blueprint(wondering.bp, url_prefix="/wondering")
-    app.register_blueprint(whoop.bp, url_prefix="/whoop")
+    app.register_blueprint(authBP, url_prefix="/auth")
+    app.register_blueprint(wonderingBP, url_prefix="/wondering")
+    app.register_blueprint(whoopBP, url_prefix="/whoop")
 
     return app
