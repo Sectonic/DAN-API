@@ -12,6 +12,6 @@ def google():
     try:
         decoded_token = auth.verify_id_token(token)
         uid = decoded_token.get("uid")
-        return f'<script>window.location.replace("exp://?uid={uid}")</script>', 200, {'Content-Type': 'text/html'}
+        return f'<script>window.location.replace("exp://192.168.5.164:8081/auth?uid={uid}")</script>', 200, {'Content-Type': 'text/html'}
     except Exception as e:
         return jsonify({"error": "Invalid token", "details": str(e)}), 400
