@@ -15,7 +15,7 @@ def google():
     token_url = "https://oauth2.googleapis.com/token"
     data = {
         'code': code,
-        'client_id': os.getenv('GOOGLE_CLIENT_ID'),
+        'client_id': os.getenv('FIREBASE_CLIENT_ID'),
         'client_secret': os.getenv('GOOGLE_CLIENT_SECRET'),
         'redirect_uri': 'https://dan-api.vercel.app/auth/google',
         'grant_type': 'authorization_code'
