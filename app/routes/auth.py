@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from routes import fb_admin
 from firebase_admin import auth
 import os
 import requests
@@ -24,12 +25,13 @@ def google():
 
     print(tokens)
 
-    id_token = tokens.get('access_token')
+    id_token = tokens.get('id_token')
     if not id_token:
         return jsonify({'error': 'ID token missing'}), 400
 
     try:
-        decoded_token = auth.verify_id_token(id_token)
+        decoded_token = auth.verify_id_token(id_token, fb_admin)
+        print(decoded_token)
         uid = decoded_token.get("uid")
         return f'<script>window.location.replace("exp://192.168.5.164:8081/auth?uid={uid}")</script>', 200, {'Content-Type': 'text/html'}
     except Exception as e:
