@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from routes import fb_admin
+from app.routes import fb_admin
 from firebase_admin import auth
 import os
 import requests
