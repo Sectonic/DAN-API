@@ -5,6 +5,7 @@ bp = Blueprint("auth", __name__)
 
 @bp.route("/google", methods=["POST", "GET"])
 def google():
+    print(vars(request))
     token = request.args.get("token")
     if not token:
         return jsonify({"error": "Token is required"}), 400
