@@ -28,6 +28,6 @@ def google():
         return jsonify({'error': 'ID token missing'}), 400
 
     try:
-        return f'<script>window.location.replace("expexp://10.91.84.194:808/auth?id_token={id_token}")</script>', 200, {'Content-Type': 'text/html'}
+        return f'<script>window.location.replace("exp://10.91.84.194:808/auth?id_token={id_token}")</script>', 200, {'Content-Type': 'text/html'}
     except Exception as e:
         return jsonify({"error": "Invalid token", "details": str(e)}), 400
