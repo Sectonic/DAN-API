@@ -28,10 +28,6 @@ def google():
         return jsonify({'error': 'ID token missing'}), 400
 
     try:
-        decoded_code = auth.verify_id_token(id_token, fb_admin)
-        uid = decoded_code.get('uid')
-        if not uid:
-            return jsonify({ 'error': 'UID is missing.'}), 400
-        return f'<script>window.location.replace("expexp://10.91.84.194:808/auth?uid={uid}")</script>', 200, {'Content-Type': 'text/html'}
+        return f'<script>window.location.replace("expexp://10.91.84.194:808/auth?id_token={id_token}")</script>', 200, {'Content-Type': 'text/html'}
     except Exception as e:
         return jsonify({"error": "Invalid token", "details": str(e)}), 400
