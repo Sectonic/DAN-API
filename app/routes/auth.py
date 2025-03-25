@@ -1,12 +1,10 @@
 from flask import Blueprint, request, jsonify
-from app.routes import fb_admin
-from firebase_admin import auth
 import os
 import requests
 
 bp = Blueprint("auth", __name__)
 
-@bp.route("/google", methods=["POST", "GET"])
+@bp.route("/google", methods=["GET"])
 def google():
     code = request.args.get("code")
     if not code:
@@ -31,3 +29,7 @@ def google():
         return f'<script>window.location.replace("exp://10.91.84.194:808/auth?id_token={id_token}")</script>', 200, {'Content-Type': 'text/html'}
     except Exception as e:
         return jsonify({"error": "Invalid token", "details": str(e)}), 400
+    
+@bp.route("/whoop", methods=["GET"])
+def whoop():
+    return None
