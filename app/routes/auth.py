@@ -21,6 +21,8 @@ def google():
     response = requests.post(token_url, data=data)
     tokens = response.json()
 
+    print(tokens)
+
     id_token = tokens.get('id_token')
     if not id_token:
         return jsonify({'error': 'ID token missing'}), 400
