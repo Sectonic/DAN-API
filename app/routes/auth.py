@@ -12,7 +12,7 @@ def google():
         return jsonify({"error": "Code is required"}), 400
     if state not in ["mobile", "desktop"]:
         return jsonify({"error": "Invalid or missing state"}), 400
-    redirect_path = "exp://10.91.84.194:8081" if state is "mobile" else "http://localhost:8081"
+    redirect_path = "exp://10.91.84.194:8081" if state == "mobile" else "http://localhost:8081"
     
     token_url = "https://oauth2.googleapis.com/token"
     data = {
