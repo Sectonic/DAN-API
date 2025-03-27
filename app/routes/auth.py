@@ -40,11 +40,11 @@ def whoop():
         return jsonify({"error": "Access token missing"}), 401
     
     user_data = WhoopService.get_user_data(access_token)
-    previous_user = UserService.get_user(user_data["user_id"])
-    if not previous_user:
-        UserService.create_user(user_data)
-    else:
+    try:
+        UserService.get_user(user_data["user_id"])
         UserService.update_user(user_data)
+    except UserNotFoundError:
+        UserService.create_user(user_data)
 
     return jsonify({
         'email': user_data["email"],
