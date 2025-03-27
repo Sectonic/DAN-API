@@ -27,8 +27,12 @@ def exchange_oauth_code(code: str, provider: str) -> Optional[str]:
         'grant_type': 'authorization_code'
     }
 
+    print(data)
+
     response = requests.post(token_urls[provider], data=data)
     tokens = response.json()
+
+    print(tokens)
     
     token_type = "id_token" if provider == "google" else "access_token"
     token = tokens.get(token_type)
