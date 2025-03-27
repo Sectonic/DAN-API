@@ -21,8 +21,8 @@ def exchange_oauth_code(code: str, provider: str) -> Optional[str]:
     
     data = {
         'code': code,
-        'client_id': os.getenv(f'{provider.upper()}_CLIENT_ID', ''),
-        'client_secret': os.getenv(f'{provider.upper()}_CLIENT_SECRET', ''),
+        'client_id': os.getenv(f'{provider.upper()}_CLIENT_ID'),
+        'client_secret': os.getenv(f'{provider.upper()}_CLIENT_SECRET'),
         'redirect_uri': f'https://dan-api.vercel.app/auth/{provider}',
         'grant_type': 'authorization_code'
     }
