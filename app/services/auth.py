@@ -26,11 +26,12 @@ def exchange_oauth_code(code: str, provider: str) -> Optional[str]:
         'redirect_uri': f'https://dan-api.vercel.app/auth/{provider}',
         'grant_type': 'authorization_code'
     }
-    
+
     response = requests.post(token_urls[provider], data=data)
-    tokens: dict = response.json()
+    tokens = response.json()
     
-    token = tokens.get('id_token')
+    token_type = "id_token" if provider == "google" else "access_token"
+    token = tokens.get(token_type)
     if not token:
         return None
     
@@ -40,7 +41,8 @@ def generate_response(token: str, provider: str) -> Union[str, Response]:
     """Generate redirect response with token"""
     
     try:
-        route = 'auth' if provider == 'google' else 'qr'
-        return f'<script>window.location.replace("exp://10.91.84.194:8081/{route}?id_token={token}")</script>', 200, {'Content-Type': 'text/html'}
+        route = "auth" if provider == "google" else "qr"
+        token_type = "idToken" if provider == "google" else "accessToken"
+        return f'<script>window.location.replace("exp://10.91.84.194:8081/{route}?{token_type}={token}")</script>', 200, {'Content-Type': 'text/html'}
     except Exception as e:
         return jsonify({"error": "Invalid token", "details": str(e)}), 400

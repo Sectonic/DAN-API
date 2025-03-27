@@ -33,6 +33,6 @@ def whoop():
     
     token = exchange_oauth_code(code, provider="whoop")
     if not token:
-        return jsonify({"error": "ID token missing"}), 401
+        return jsonify({"error": "Access token missing"}), 401
     
     return generate_response(token, provider="whoop")
