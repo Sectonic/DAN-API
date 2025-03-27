@@ -39,9 +39,17 @@ def whoop():
     if not access_token or not refresh_token:
         return jsonify({"error": "Access token missing"}), 401
     
-    user_data = WhoopService.get_user_data(access_token)    
-    return jsonify(user_data), 200
-    
+    user_data = WhoopService.get_user_data(access_token)
+    previous_user = UserService.get_user(user_data["user_id"])
+    if not previous_user:
+        UserService.create_user(user_data)
+    else:
+        UserService.update_user(user_data)
+
+    return jsonify({
+        'email': user_data["email"],
+        'generated_password': user_data['generated_password']
+    }), 200
 
 
 

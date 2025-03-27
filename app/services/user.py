@@ -12,11 +12,21 @@ class UserService:
         return user.provider_data[0].provider_id == 'google.com'
     
     @staticmethod
-    def create_user(data: WhoopUser):
-        user = auth.create_user(
+    def create_user(data: WhoopUser) -> None:
+        auth.create_user(
             uid=data['user_id'],
             display_name=f'{data["first_name"]} ${data["last_name"]}',
             email=data['email'],
             email_verified=True,
-            password=f'WHOOP${data['user_id']}'
+            password=data['generated_password'],
+            app=firebase_app
         )
+    
+    @staticmethod 
+    def update_user(data: WhoopUser) -> None:
+        auth.update_user(data['user_id'],
+            display_name=f'{data["first_name"]} ${data["last_name"]}',
+            email=data['email'], 
+            app=firebase_app
+        )
+

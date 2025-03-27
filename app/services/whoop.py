@@ -1,11 +1,13 @@
 from typing import TypedDict
 import requests
+import hashlib
 
 class WhoopUser(TypedDict):
     user_id: int
     email: str
     first_name: str
     last_name: str
+    generated_password: str
 
 class WhoopService:
     @staticmethod
@@ -16,4 +18,6 @@ class WhoopService:
         }
         response = requests.get(url, headers=headers)
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        data["generated_password"] = hashlib.sha256(str(data["user_id"]).encode()).hexdigest()
+        return data
