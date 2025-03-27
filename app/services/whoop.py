@@ -3,7 +3,7 @@ import requests
 import hashlib
 
 class WhoopUser(TypedDict):
-    user_id: int
+    user_id: str
     email: str
     first_name: str
     last_name: str
@@ -19,5 +19,6 @@ class WhoopService:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
         data = response.json()
-        data["generated_password"] = hashlib.sha256(str(data["user_id"]).encode()).hexdigest()
+        data["user_id"] = str(data["user_id"])
+        data["generated_password"] = hashlib.sha256(data["user_id"].encode()).hexdigest()
         return data
