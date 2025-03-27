@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
-from app.services.auth import exchange_oauth_code, generate_response
-from app.services.user import get_user, get_if_caregiver
+from app.services.auth import AuthService
+from app.services.user import UserService
+from app.services.whoop import WhoopService
 from firebase_admin.auth import UserNotFoundError
 
 bp = Blueprint("auth", __name__)
@@ -11,11 +12,12 @@ def google():
     if not code:
         return jsonify({"error": "Code is required"}), 422
     
-    token = exchange_oauth_code(code, provider="google")
-    if not token:
+    tokens = AuthService.exchange_oauth_code(code, provider="google")
+    id_token = tokens.get('id_token')
+    if not id_token:
         return jsonify({"error": "ID token missing"}), 401
     
-    return generate_response(token, provider="google")
+    return AuthService.generate_response(id_token, provider="google")
     
 @bp.route("/whoop", methods=["GET"])
 def whoop():
@@ -25,14 +27,23 @@ def whoop():
         return jsonify({"error": "Code is required"}), 422
     
     try:
-        caregiver = get_user(state)
-        if not get_if_caregiver(caregiver):
+        caregiver = UserService.get_user(state)
+        if not UserService.get_if_caregiver(caregiver):
             return jsonify({"error": "State provided is not associated with a caregiver"}), 403
     except UserNotFoundError:
         return jsonify({"error": "State provided has no associated user"}), 404
     
-    token = exchange_oauth_code(code, provider="whoop")
-    if not token:
+    tokens = AuthService.exchange_oauth_code(code, provider="whoop")
+    access_token = tokens.get('access_token')
+    refresh_token = tokens.get('refresh_token')
+    if not access_token or not refresh_token:
         return jsonify({"error": "Access token missing"}), 401
     
-    return generate_response(token, provider="whoop")
+    user_data = WhoopService.get_user_data(access_token)    
+    return jsonify(user_data), 200
+    
+
+
+
+
+
