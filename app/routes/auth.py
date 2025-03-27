@@ -1,23 +1,38 @@
 from flask import Blueprint, request, jsonify
-from app.services.auth import exchange_google_code, generate_google_response
+from app.services.auth import exchange_oauth_code, generate_response
+from app.services.user import get_user
+from firebase_admin.auth import UserNotFoundError
 
 bp = Blueprint("auth", __name__)
 
 @bp.route("/google", methods=["GET"])
 def google():
     code = request.args.get("code")
-    state = request.args.get("state")
     if not code:
-        return jsonify({"error": "Code is required"}), 400
-    if state not in ["mobile", "desktop"]:
-        return jsonify({"error": "Invalid or missing state"}), 400
+        return jsonify({"error": "Code is required"}), 422
     
-    id_token = exchange_google_code(code)
-    if not id_token:
-        return jsonify({'error': 'ID token missing'}), 400
+    token = exchange_oauth_code(code, provider="google")
+    if not token:
+        return jsonify({"error": "ID token missing"}), 401
     
-    return generate_google_response(state, id_token)
+    return generate_response(token, provider="google")
     
 @bp.route("/whoop", methods=["GET"])
 def whoop():
-    return None
+    code = request.args.get("code")
+    state = request.args.get("state")
+    if not code:
+        return jsonify({"error": "Code is required"}), 422
+    
+    try:
+        caregiver = get_user(state)
+        if caregiver.provider_id != "google.com":
+            return jsonify({"error": "User is not a caregiver"}), 403
+    except UserNotFoundError:
+        return jsonify({"error": "State provided has no associated user"}), 404
+    
+    token = exchange_oauth_code(code, provider="whoop")
+    if not token:
+        return jsonify({"error": "ID token missing"}), 401
+    
+    return generate_response(token, provider="whoop")
