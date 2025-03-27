@@ -3,7 +3,6 @@ from .routes.auth import bp as authBP
 from .routes.wondering import bp as wonderingBP
 from .routes.whoop import bp as whoopBP
 from .routes.user import bp as userBP
-from .utils.firebase import firebase_app
 
 def create_app():
     app = Flask(__name__)
