@@ -1,5 +1,8 @@
 from firebase_admin import credentials, initialize_app
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def initialize_firebase():
     """Initialize Firebase Admin SDK"""

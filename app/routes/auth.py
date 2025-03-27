@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.services.auth import exchange_oauth_code, generate_response
-from app.services.user import get_user
+from app.services.user import get_user, get_if_caregiver
 from firebase_admin.auth import UserNotFoundError
 
 bp = Blueprint("auth", __name__)
@@ -26,8 +26,8 @@ def whoop():
     
     try:
         caregiver = get_user(state)
-        if caregiver.provider_id != "google.com":
-            return jsonify({"error": "User is not a caregiver"}), 403
+        if not get_if_caregiver(caregiver):
+            return jsonify({"error": "State provided is not associated with a caregiver"}), 403
     except UserNotFoundError:
         return jsonify({"error": "State provided has no associated user"}), 404
     

@@ -1,9 +1,12 @@
 import os
+from dotenv import load_dotenv
 import requests
 from flask import jsonify
 from typing import Union
 from flask import Response
 from typing import Optional
+
+load_dotenv()
 
 def exchange_oauth_code(code: str, provider: str) -> Optional[str]:
     """Exchange authorization code for token from OAuth provider"""
