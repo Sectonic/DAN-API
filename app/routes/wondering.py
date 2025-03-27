@@ -1,9 +1,7 @@
-from flask import Blueprint, request, jsonify
-from app.services import track_location
+from flask import Blueprint, jsonify
 
 bp = Blueprint("wondering", __name__)
 
 @bp.route("/track", methods=["POST"])
 def track():
-    data = request.json
-    return jsonify(track_location(data))
+    return jsonify({ 'message': 'Tracking endpoint is under development' })
