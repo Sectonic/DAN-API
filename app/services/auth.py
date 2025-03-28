@@ -2,17 +2,14 @@ import os
 from dotenv import load_dotenv
 import requests
 from flask import jsonify
-from typing import Union
+from typing import Union, Optional
 from flask import Response
-from typing import Optional
 
 load_dotenv()
 
 class AuthService:
     @staticmethod
     def exchange_oauth_code(code: str, provider: str) -> Optional[str]:
-        """Exchange authorization code for token from OAuth provider"""
-
         token_urls = {
             'google': 'https://oauth2.googleapis.com/token',
             'whoop': 'https://api.prod.whoop.com/oauth/oauth2/token'
@@ -35,8 +32,6 @@ class AuthService:
 
     @staticmethod
     def generate_response(token: dict[str, str], provider: str) -> Union[str, Response]:
-        """Generate redirect response with token"""
-
         try:
             route = "auth" if provider == "google" else "qr"
             token_query = "&".join([f"{key}={value}" for key, value in token.items()])

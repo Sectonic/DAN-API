@@ -8,7 +8,10 @@ bp = Blueprint('user', __name__)
 def get_user(uid):
     try:
         caregiver = UserService.get_if_caregiver(UserService.get_user(uid))
-        return (jsonify({ "contains": True }), 200) if caregiver else (jsonify({ "contains": False}), 400)
+        if caregiver:
+            return jsonify({ "contains": True }), 200
+        else:
+            return jsonify({ "contains": False}), 400
     except UserNotFoundError:
         return jsonify({"contains": False}), 404
     except Exception as e:
