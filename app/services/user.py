@@ -1,15 +1,19 @@
-from firebase_admin import auth
-from app.utils.firebase import firebase_app
+from app.utils.firebase import db, auth
 from app.services.whoop import WhoopUser
 
 class UserService:
     @staticmethod
     def get_user(uid: str) -> auth.UserRecord:
-        return auth.get_user(uid, firebase_app)
+        return auth.get_user(uid)
     
     @staticmethod
     def get_if_caregiver(user: auth.UserRecord) -> bool:
         return user.provider_data[0].provider_id == 'google.com'
+    
+    @staticmethod
+    def get_if_connected(uid: str) -> bool:
+        giver_query = db.collection('pairings').where('giver_uid', '==', uid).limit(1).get()
+        return len(list(giver_query)) > 0
     
     @staticmethod
     def create_user(data: WhoopUser) -> None:
@@ -19,7 +23,6 @@ class UserService:
             email=data['email'],
             email_verified=True,
             password=data['generated_password'],
-            app=firebase_app
         )
     
     @staticmethod 
@@ -27,6 +30,13 @@ class UserService:
         auth.update_user(data['user_id'],
             display_name=f'{data["first_name"]} ${data["last_name"]}',
             email=data['email'], 
-            app=firebase_app
         )
+    
+    @staticmethod
+    def connect_users(giver_uid: str, receiver_uid: str) -> None:
+        db.collection('pairings').add({
+            'giver_uid': giver_uid,
+            'receiver_uid': receiver_uid,
+        })
+
 

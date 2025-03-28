@@ -34,12 +34,13 @@ class AuthService:
         return tokens
 
     @staticmethod
-    def generate_response(token: str, provider: str) -> Union[str, Response]:
+    def generate_response(token: dict[str, str], provider: str) -> Union[str, Response]:
         """Generate redirect response with token"""
-        
+
         try:
             route = "auth" if provider == "google" else "qr"
-            token_type = "idToken" if provider == "google" else "accessToken"
-            return f'<script>window.location.replace("exp://10.91.84.194:8081/{route}?{token_type}={token}")</script>', 200, {'Content-Type': 'text/html'}
+            token_query = "&".join([f"{key}={value}" for key, value in token.items()])
+            return f'<script>window.location.replace("exp://10.91.84.194:8081/{route}?{token_query}")</script>', 200, {'Content-Type': 'text/html'}
         except Exception as e:
             return jsonify({"error": "Invalid token", "details": str(e)}), 400
+

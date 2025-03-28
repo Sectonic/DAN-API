@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from firebase_admin import auth
+from firebase_admin.auth import UserNotFoundError
 from app.services.user import UserService
 
 bp = Blueprint('user', __name__)
@@ -9,7 +9,7 @@ def get_user(uid):
     try:
         caregiver = UserService.get_if_caregiver(UserService.get_user(uid))
         return (jsonify({ "contains": True }), 200) if caregiver else (jsonify({ "contains": False}), 400)
-    except auth.UserNotFoundError:
+    except UserNotFoundError:
         return jsonify({"contains": False}), 404
     except Exception as e:
         return jsonify({"contains": False, "error": str(e)}), 500

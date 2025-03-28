@@ -17,7 +17,9 @@ def google():
     if not id_token:
         return jsonify({"error": "ID token missing"}), 401
     
-    return AuthService.generate_response(id_token, provider="google")
+    return AuthService.generate_response({ 
+        "id_token": id_token 
+    }, provider="google")
     
 @bp.route("/whoop", methods=["GET"])
 def whoop():
@@ -44,12 +46,19 @@ def whoop():
         UserService.get_user(user_data["user_id"])
         UserService.update_user(user_data)
     except UserNotFoundError:
+        if UserService.get_if_connected(state):
+            return AuthService.generate_response({
+                "error": "Caregiver already has a receiver"
+            }, provider="whoop");
         UserService.create_user(user_data)
+        UserService.connect_users(state, user_data["user_id"])
 
-    return jsonify({
-        'email': user_data["email"],
-        'generated_password': user_data['generated_password']
-    }), 200
+    return AuthService.generate_response({ 
+        "uid": user_data["user_id"],
+        "caregiver_uid": state,
+        "email": user_data["email"],
+        "generated_password": user_data["generated_password"]
+    }, provider="whoop")
 
 
 
