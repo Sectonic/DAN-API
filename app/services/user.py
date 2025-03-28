@@ -1,13 +1,14 @@
+from firebase_admin.auth import UserRecord
 from app.utils.firebase import db, auth
 from app.services.whoop import WhoopUser
 
 class UserService:
     @staticmethod
-    def get_user(uid: str) -> auth.UserRecord:
+    def get_user(uid: str) -> UserRecord:
         return auth.get_user(uid)
     
     @staticmethod
-    def get_if_caregiver(user: auth.UserRecord) -> bool:
+    def get_if_caregiver(user: UserRecord) -> bool:
         return user.provider_data[0].provider_id == 'google.com'
     
     @staticmethod
