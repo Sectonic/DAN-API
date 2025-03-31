@@ -1,6 +1,6 @@
 from firebase_admin.auth import UserRecord
 from app.utils.firebase import db, auth
-from app.services.whoop import WhoopUser
+from app.types.whoop import WhoopUser
 
 class UserService:
     @staticmethod
@@ -13,11 +13,11 @@ class UserService:
     
     @staticmethod
     def get_if_connected(uid: str) -> bool:
-        giver_query = db.collection('pairings').where('giver_uid', '==', uid).limit(1).get()
-        return len(list(giver_query)) > 0
+        giver_query = db.collection('pairings').document(uid).get()
+        return giver_query.exists
     
     @staticmethod
-    def create_user(data: WhoopUser) -> None:
+    def create_user(data: WhoopUser, access_token: str, refresh_token: str) -> None:
         auth.create_user(
             uid=data['user_id'],
             display_name=f'{data["first_name"]} ${data["last_name"]}',
@@ -25,18 +25,26 @@ class UserService:
             email_verified=True,
             password=data['generated_password'],
         )
+        db.collection('receiver_data').document(data['user_id']).set({
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        })
     
     @staticmethod 
-    def update_user(data: WhoopUser) -> None:
-        auth.update_user(data['user_id'],
+    def update_user(data: WhoopUser, access_token: str, refresh_token: str) -> None:
+        auth.update_user(
+            data['user_id'],
             display_name=f'{data["first_name"]} ${data["last_name"]}',
             email=data['email'], 
         )
+        db.collection('receiver_data').document(data['user_id']).set({
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        })
     
     @staticmethod
     def connect_users(giver_uid: str, receiver_uid: str) -> None:
-        db.collection('pairings').add({
-            'giver_uid': giver_uid,
+        db.collection('pairings').document(giver_uid).set({
             'receiver_uid': receiver_uid,
         })
 
