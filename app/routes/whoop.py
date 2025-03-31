@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify
-from app.services.whoop import WhoopService
 from app.services.webhook import WebhookService
 from app.types.webhook import WebhookData
 
@@ -11,7 +10,7 @@ def webhook():
     signature_header = request.headers.get('X-WHOOP-Signature')
     timestamp_header = request.headers.get('X-WHOOP-Signature-Timestamp')
     
-    valid_signature = WhoopService.validate_webhook_signature(
+    valid_signature = WebhookService.validate_webhook_signature(
         raw_body, 
         signature_header, 
         timestamp_header
@@ -27,7 +26,7 @@ def webhook():
     
     try:
         if event_type.startswith(('workout', 'sleep', 'recovery')):
-            WhoopService.process_event(event_type, webhook_data)
+            WebhookService.process_event(event_type, webhook_data)
         else:
             return jsonify({"error": f"Unhandled event type: {event_type}"}), 400
     except Exception as e:

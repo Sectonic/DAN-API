@@ -39,5 +39,4 @@ class WebhookService:
             'user_id': data['user_id'],
             'event_type': data['type'],
             'timestamp': data['timestamp'],
-            'details': data
         })
