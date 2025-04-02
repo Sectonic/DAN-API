@@ -44,13 +44,13 @@ def whoop():
     user_data = WhoopService.get_user_data(access_token)
     try:
         UserService.get_user(user_data["user_id"])
-        UserService.update_user(user_data)
+        UserService.update_user(user_data, access_token, refresh_token)
     except UserNotFoundError:
         if UserService.get_if_connected(state):
             return AuthService.generate_response({
                 "error": "Caregiver already has a receiver"
             }, provider="whoop");
-        UserService.create_user(user_data)
+        UserService.create_user(user_data, access_token, refresh_token)
         UserService.connect_users(state, user_data["user_id"])
 
     return AuthService.generate_response({ 
