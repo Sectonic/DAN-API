@@ -1,8 +1,8 @@
 from flask import Flask
-from .routes.auth import bp as authBP
-from .routes.wondering import bp as wonderingBP
-from .routes.whoop import bp as whoopBP
-from .routes.user import bp as userBP
+from app.routes.auth import bp as authBP
+from app.routes.wondering import bp as wonderingBP
+from app.routes.whoop import bp as whoopBP
+from app.routes.user import bp as userBP
 
 def create_app():
     app = Flask(__name__)
