@@ -15,7 +15,7 @@ def webhook():
         signature_header, 
         timestamp_header
     )
-    if valid_signature:
+    if not valid_signature:
         return jsonify({"error": "Invalid signature"}), 403
     
     webhook_data: WebhookData  = request.json
