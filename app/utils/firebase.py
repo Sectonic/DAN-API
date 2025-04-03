@@ -1,3 +1,4 @@
+import firebase_admin
 from firebase_admin import credentials, initialize_app, firestore, auth
 import os
 from dotenv import load_dotenv
@@ -21,6 +22,9 @@ def initialize_firebase():
     })
     return initialize_app(cred)
 
-firebase_app = initialize_firebase()
+if firebase_admin._DEFAULT_APP_NAME in firebase_admin._apps:
+    firebase_app = firebase_admin.get_app()
+else:
+    firebase_app = initialize_firebase()
 db = firestore.client(firebase_app)
 auth = auth.Client(firebase_app)
