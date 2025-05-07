@@ -1,7 +1,6 @@
 from flask import Flask
 from app.routes.auth import bp as authBP
 from app.routes.wondering import bp as wonderingBP
-from app.routes.whoop import bp as whoopBP
 from app.routes.user import bp as userBP
 
 def create_app():
@@ -9,7 +8,6 @@ def create_app():
 
     app.register_blueprint(authBP, url_prefix="/auth")
     app.register_blueprint(wonderingBP, url_prefix="/wondering")
-    app.register_blueprint(whoopBP, url_prefix="/whoop")
     app.register_blueprint(userBP, url_prefix="/user")
 
     return app

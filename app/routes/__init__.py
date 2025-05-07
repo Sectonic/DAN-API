@@ -1,5 +1,8 @@
 from firebase_admin import credentials, initialize_app as initialize_admin
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 cred = credentials.Certificate({
   "type": "service_account",
@@ -18,4 +21,3 @@ fb_admin = initialize_admin(cred)
 
 from .auth import bp as auth
 from .wondering import bp as wondering
-from .whoop import bp as whoop

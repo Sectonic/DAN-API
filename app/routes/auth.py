@@ -1,66 +1,113 @@
 from flask import Blueprint, request, jsonify
 from app.services.auth import AuthService
 from app.services.user import UserService
-from app.services.whoop import WhoopService
+from app.services.spotify import SpotifyService
 from firebase_admin.auth import UserNotFoundError
+import json
 
 bp = Blueprint("auth", __name__)
 
 @bp.route("/google", methods=["GET"])
 def google():
     code = request.args.get("code")
-    if not code:
-        return jsonify({"error": "Code is required"}), 422
+    state = request.args.get("state")
+    if not all([code, state]):
+        return jsonify({"error": "Missing required fields: code, state"}), 422
     
-    tokens = AuthService.exchange_oauth_code(code, provider="google")
+    auth = AuthService(state, "google")
+    
+    tokens = auth.exchange_oauth_code(code)
     id_token = tokens.get('id_token')
     if not id_token:
-        return jsonify({"error": "ID token missing"}), 401
+        return auth.generate_response({"error": "ID token missing"})
     
-    return AuthService.generate_response({ 
-        "id_token": id_token 
-    }, provider="google")
-    
-@bp.route("/whoop", methods=["GET"])
-def whoop():
+    return auth.generate_response({"id_token": id_token})
+
+@bp.route("/spotify", methods=["GET"])
+def spotify():
     code = request.args.get("code")
     state = request.args.get("state")
-    if not code:
-        return jsonify({"error": "Code is required"}), 422
-    
+    if not all([code, state]):
+        return jsonify({"error": "Missing required fields: code, state"}), 422
+
     try:
-        caregiver = UserService.get_user(state)
-        if not UserService.get_if_caregiver(caregiver):
-            return jsonify({"error": "State provided is not associated with a caregiver"}), 403
-    except UserNotFoundError:
-        return jsonify({"error": "State provided has no associated user"}), 404
+        state = json.loads(state)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid state format: Not valid JSON"}), 400
     
-    tokens = AuthService.exchange_oauth_code(code, provider="whoop")
+    if 'url' not in state or 'uid' not in state:
+        return jsonify({"error": "Invalid state format: Missing 'url' or 'uid' key"}), 400
+    
+    auth = AuthService(state['url'], 'spotify')
+    
+    tokens = auth.exchange_oauth_code(code)
     access_token = tokens.get('access_token')
     refresh_token = tokens.get('refresh_token')
-    if not access_token or not refresh_token:
-        return jsonify({"error": "Access token missing"}), 401
+    if not all([access_token, refresh_token]):
+        return auth.generate_response({"error": "Missing tokens: access token, refresh token"})
     
-    user_data = WhoopService.get_user_data(access_token)
+    SpotifyService.set_spotify_tokens(state['uid'], access_token, refresh_token)
+    return auth.generate_response()
+
+@bp.route("/patient/create", methods=["POST"])
+def patient_create():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+
+    name = data.get("name")
+    caregiver_uid = data.get("caregiver_uid")
+
+    if not all([name, caregiver_uid]):
+        print(name, caregiver_uid)
+        return jsonify({"error": "Missing required fields: name, caregiver_uid"}), 422
+    
     try:
-        UserService.get_user(user_data["user_id"])
-        UserService.update_user(user_data, access_token, refresh_token)
+        caregiver = UserService.get_user(caregiver_uid)
+        if not UserService.is_caregiver(caregiver):
+            return jsonify({"error": "Provided caregiver_uid is not associated with a caregiver"}), 403
     except UserNotFoundError:
-        if UserService.get_if_connected(state):
-            return AuthService.generate_response({
-                "error": "Caregiver already has a receiver"
-            }, provider="whoop");
-        UserService.create_user(user_data, access_token, refresh_token)
-        UserService.connect_users(state, user_data["user_id"])
+        return jsonify({"error": "Provided caregiver_uid has no associated user"}), 404
+    except Exception as e:
+         return jsonify({"error": f"Error validating caregiver: {str(e)}"}), 500
 
-    return AuthService.generate_response({ 
-        "uid": user_data["user_id"],
-        "caregiver_uid": state,
-        "email": user_data["email"],
-        "generated_password": user_data["generated_password"]
-    }, provider="whoop")
+    try:
+        patient_uid = UserService.create_patient(name)
+        UserService.connect_users(caregiver_uid, patient_uid)
+        custom_token = AuthService.generate_patient_token(patient_uid, caregiver_uid)
+        return jsonify({"custom_token": custom_token}), 201
+    except Exception as e:
+        return jsonify({"error": f"Failed to create patient: {str(e)}"}), 500
 
+@bp.route("/patient/login", methods=["POST"])
+def patient_login():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
 
+    caregiver_uid = data.get("caregiver_uid")
+    patient_uid = data.get("patient_uid")
+
+    if not all([caregiver_uid, patient_uid]):
+        return jsonify({"error": "Missing required fields: caregiver_uid, patient_uid"}), 422
+
+    try:
+        UserService.get_user(caregiver_uid)
+        UserService.get_user(patient_uid)
+    except UserNotFoundError:
+        return jsonify({"error": "Provided caregiver_uid or patient_uid has no associated user"}), 404
+    except Exception as e:
+         return jsonify({"error": f"Error validating users: {str(e)}"}), 500
+
+    associated_patient_uids = UserService.get_patient_uids_for_caregiver(caregiver_uid)
+    if associated_patient_uids is None or patient_uid not in associated_patient_uids:
+        return jsonify({"error": "Patient is not associated with this caregiver"}), 403
+
+    try:
+        custom_token = AuthService.generate_patient_token(patient_uid, caregiver_uid)
+        return jsonify({"custom_token": custom_token}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to generate patient token: {str(e)}"}), 500
 
 
 

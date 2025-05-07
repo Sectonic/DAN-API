@@ -1,51 +1,43 @@
 from firebase_admin.auth import UserRecord
+from firebase_admin import firestore
 from app.utils.firebase import db, auth
-from app.types.whoop import WhoopUser
+from app.services.auth import AuthService
 
 class UserService:
     @staticmethod
     def get_user(uid: str) -> UserRecord:
         return auth.get_user(uid)
-    
+
     @staticmethod
-    def get_if_caregiver(user: UserRecord) -> bool:
-        return user.provider_data[0].provider_id == 'google.com'
-    
+    def is_caregiver(user: UserRecord) -> bool:
+        return any(provider.provider_id == 'google.com' for provider in user.provider_data)
+
     @staticmethod
-    def get_if_connected(uid: str) -> bool:
-        giver_query = db.collection('pairings').document(uid).get()
-        return giver_query.exists
-    
+    def get_pairing(uid: str) -> str | None:
+        pairing_doc = db.collection('pairings').document(uid).get()
+        if pairing_doc.exists:
+            return pairing_doc.to_dict().get('patient_uid')
+        return None
+
     @staticmethod
-    def create_user(data: WhoopUser, access_token: str, refresh_token: str) -> None:
-        auth.create_user(
-            uid=data['user_id'],
-            display_name=f'{data["first_name"]} ${data["last_name"]}',
-            email=data['email'],
-            email_verified=True,
-            password=data['generated_password'],
+    def get_patient_uids_for_caregiver(uid: str) -> list[str] | None:
+        pairing_doc = db.collection('pairings').document(uid).get()
+        if pairing_doc.exists:
+            return pairing_doc.to_dict().get('patient_uids', [])
+        return None
+
+    @staticmethod
+    def create_patient(name: str) -> tuple[str, str]:
+        user_record = auth.create_user(
+            display_name=name
         )
-        db.collection('receiver_data').document(data['user_id']).set({
-            'access_token': access_token,
-            'refresh_token': refresh_token
-        })
-    
-    @staticmethod 
-    def update_user(data: WhoopUser, access_token: str, refresh_token: str) -> None:
-        auth.update_user(
-            data['user_id'],
-            display_name=f'{data["first_name"]} ${data["last_name"]}',
-            email=data['email'], 
-        )
-        db.collection('receiver_data').document(data['user_id']).set({
-            'access_token': access_token,
-            'refresh_token': refresh_token
-        })
-    
+        return user_record.uid
+
     @staticmethod
-    def connect_users(giver_uid: str, receiver_uid: str) -> None:
-        db.collection('pairings').document(giver_uid).set({
-            'receiver_uid': receiver_uid,
-        })
+    def connect_users(giver_uid: str, patient_uid: str) -> None:
+        pairing_ref = db.collection('pairings').document(giver_uid)
+        pairing_ref.set({
+            'patient_uids': firestore.ArrayUnion([patient_uid])
+        }, merge=True)
 
 
