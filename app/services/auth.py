@@ -2,10 +2,11 @@ import os
 from dotenv import load_dotenv
 import requests
 from flask import jsonify
-from typing import Union, Optional, Dict
+from typing import Union, Optional, Dict, Literal
 from flask import Response
 from app.utils.firebase import auth
 from urllib.parse import urlencode
+from firebase_admin.auth import UserRecord
 
 load_dotenv()
 
@@ -24,6 +25,18 @@ class AuthService:
     def __init__(self, url: str, provider: str):
         self.url = url;
         self.provider = provider;
+
+    @staticmethod
+    def get_user(uid: str, user_type: Literal['patient', 'caregiver']) -> UserRecord:
+        user = auth.get_user(uid)
+        is_caregiver = user.email is not None
+        
+        if user_type == 'caregiver' and not is_caregiver:
+            raise ValueError("User is not a caregiver")
+        elif user_type == 'patient' and is_caregiver:
+            raise ValueError("User is a caregiver, not a patient")
+            
+        return user
 
     def exchange_oauth_code(self, code: str) -> Optional[Dict[str, str]]:
         if self.provider not in AuthService.TOKEN_URLS:

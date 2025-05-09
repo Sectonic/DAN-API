@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app.services.auth import AuthService
-from app.services.user import UserService
+from app.services.caregiver import CaregiverService
+from app.services.patient import PatientService
 from app.services.spotify import SpotifyService
 from firebase_admin.auth import UserNotFoundError
 import json
@@ -63,17 +64,17 @@ def patient_create():
         return jsonify({"error": "Missing required fields: name, caregiver_uid"}), 422
     
     try:
-        caregiver = UserService.get_user(caregiver_uid)
-        if not UserService.is_caregiver(caregiver):
-            return jsonify({"error": "Provided caregiver_uid is not associated with a caregiver"}), 403
+        AuthService.get_user(caregiver_uid, 'caregiver')
     except UserNotFoundError:
         return jsonify({"error": "Provided caregiver_uid has no associated user"}), 404
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 403
     except Exception as e:
          return jsonify({"error": f"Error validating caregiver: {str(e)}"}), 500
 
     try:
-        patient_uid = UserService.create_patient(name)
-        UserService.connect_users(caregiver_uid, patient_uid)
+        patient_uid = PatientService.create_patient(name)
+        CaregiverService.connect_patient(caregiver_uid, patient_uid)
         custom_token = AuthService.generate_patient_token(patient_uid, caregiver_uid)
         return jsonify({"custom_token": custom_token}), 201
     except Exception as e:
@@ -92,15 +93,17 @@ def patient_login():
         return jsonify({"error": "Missing required fields: caregiver_uid, patient_uid"}), 422
 
     try:
-        UserService.get_user(caregiver_uid)
-        UserService.get_user(patient_uid)
+        AuthService.get_user(caregiver_uid, 'caregiver')
+        AuthService.get_user(patient_uid, 'patient')
     except UserNotFoundError:
         return jsonify({"error": "Provided caregiver_uid or patient_uid has no associated user"}), 404
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 403
     except Exception as e:
          return jsonify({"error": f"Error validating users: {str(e)}"}), 500
 
-    associated_patient_uids = UserService.get_patient_uids_for_caregiver(caregiver_uid)
-    if associated_patient_uids is None or patient_uid not in associated_patient_uids:
+    associated_patient_uids = CaregiverService.get_patient_uids(caregiver_uid)
+    if patient_uid not in associated_patient_uids:
         return jsonify({"error": "Patient is not associated with this caregiver"}), 403
 
     try:
